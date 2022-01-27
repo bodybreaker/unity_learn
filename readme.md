@@ -7,3 +7,9 @@
 https://unity3d.com/get-unity/download/archive
 ```
 
+* Manual Activation 필요
+```
+https://docs.unity3d.com/Manual/ManualActivationGuide.html
+```
+
+### 
