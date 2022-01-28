@@ -19,4 +19,6 @@ https://docs.unity3d.com/Manual/ManualActivationGuide.html
 https://dotnet.microsoft.com/en-us/download/dotnet/sdk-for-vs-code
 ```
 * VS Code 확장프로그램 설치
-
+```
+C# , Unity Debugger
+```
