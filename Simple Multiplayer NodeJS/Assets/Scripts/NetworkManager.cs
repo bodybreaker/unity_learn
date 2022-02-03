@@ -139,6 +139,16 @@ public class NetworkManager : MonoBehaviour {
 			pc.CmdFire();
 
         });
+
+		socket.On("player shake", (string data)=>{
+			ShakeJson shakeJson = ShakeJson.CreateFromJSON(data);
+			//find the gameobject
+			GameObject p = GameObject.Find(shakeJson.name);
+			// instantiate the bullet etc from the player script
+			PlayerController pc = p.GetComponent<PlayerController>();
+			pc.CmdShake();
+
+        });
 		socket.On("health", (string data)=>{
 			print("changing the health");
 			// get the name of the player whose health changed
@@ -197,6 +207,12 @@ public class NetworkManager : MonoBehaviour {
 	{
 		print("Shoot");
 		socket.Emit("player shoot");
+	}
+
+	public void CommandShake()
+	{
+		print("Shake");
+		socket.Emit("player shake");
 	}
 
 	public void CommandHealthChange(GameObject playerFrom, GameObject playerTo, int healthChange, bool isEnemy)
@@ -346,6 +362,17 @@ public class NetworkManager : MonoBehaviour {
 		public static ShootJSON CreateFromJSON(string data)
 		{
 			return JsonUtility.FromJson<ShootJSON>(data);
+		}
+	}
+
+	[Serializable]
+	public class ShakeJson
+	{
+		public string name;
+
+		public static ShakeJson CreateFromJSON(string data)
+		{
+			return JsonUtility.FromJson<ShakeJson>(data);
 		}
 	}
 

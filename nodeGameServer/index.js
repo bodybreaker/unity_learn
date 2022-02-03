@@ -115,6 +115,16 @@ io.on('connection', function(socket) {
 		socket.broadcast.emit('player shoot', data);
 	});
 
+	socket.on('player shake', function() {
+		console.log(currentPlayer.name+' recv: shake');
+		var data = {
+			name: currentPlayer.name
+		};
+		console.log(currentPlayer.name+' bcst: shake: '+JSON.stringify(data));
+		socket.emit('player shake', data);
+		socket.broadcast.emit('player shake', data);
+	});
+
 	socket.on('chat',function(data){
 		console.log(currentPlayer.name+' recv: chat: '+JSON.stringify(data));
 		var data ={

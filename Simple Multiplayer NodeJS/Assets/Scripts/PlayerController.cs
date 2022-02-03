@@ -34,6 +34,8 @@ public class PlayerController : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		animator = chracterBody.GetComponent<Animator>();
+		animator.SetTrigger("Land");
+
 		oldPosition = transform.position;
 		currentPosition = oldPosition;
 		oldRotation = transform.rotation;
@@ -48,8 +50,7 @@ public class PlayerController : MonoBehaviour {
 
 			for (int i=0;i<ct.childCount;i++){
 				Destroy(ct.GetChild(i).gameObject);
-			}
-			
+			}			
 			
 		}
 
@@ -68,6 +69,12 @@ public class PlayerController : MonoBehaviour {
 			NetworkManager n = NetworkManager.instance.GetComponent<NetworkManager>();
 			n.CommandShoot();
 		}
+
+		if (Input.GetKeyDown (KeyCode.LeftControl) && !chatInput.isFocused) {
+			NetworkManager n = NetworkManager.instance.GetComponent<NetworkManager>();
+			n.CommandShake();
+		}
+
 		if(!chatInput.isFocused){
 			LookAround();
 			Move();
@@ -79,8 +86,10 @@ public class PlayerController : MonoBehaviour {
 		if (otherCurrentPosition != otherOldPosition) {
 			otherOldPosition = otherCurrentPosition;
 			animator.SetBool("isMove",true);
+			animator.SetFloat("MoveSpeed", 100f);
 		}else{
 			animator.SetBool("isMove",false);
+			animator.SetFloat("MoveSpeed", 0f);
 		}
 	}
 
@@ -108,6 +117,15 @@ public class PlayerController : MonoBehaviour {
 		Vector2 moveInput = new Vector2(Input.GetAxis("Horizontal"),Input.GetAxis("Vertical"));
 		bool isMove = moveInput.magnitude!=0;
 		animator.SetBool("isMove",isMove);
+		if(isMove){
+			animator.SetFloat("MoveSpeed", 100f);
+		}else{
+			animator.SetFloat("MoveSpeed", 0f);
+		}
+
+		bool test = animator.GetBool("isMove");
+
+		Debug.Log("isMove >> "+test);
 		if(isMove){
 			Vector3 lookForward = new Vector3(cameraArm.forward.x,0f,cameraArm.forward.z).normalized;
 			Vector3 lookRight = new Vector3(cameraArm.right.x,0f,cameraArm.right.z).normalized;
@@ -156,15 +174,19 @@ public class PlayerController : MonoBehaviour {
 
 
 	public void CmdFire() {
-		var bullet = Instantiate(bulletPrefab, 
-		                         bulletSpawn.position, 
-		                         bulletSpawn.rotation) as GameObject;
-		Bullet b = bullet.GetComponent<Bullet>();
-		b.playerFrom = this.gameObject;
-		print("setting the velocity");
-		print(bullet.transform.up);
-		bullet.GetComponent<Rigidbody>().isKinematic = false;
-		bullet.GetComponent<Rigidbody>().AddForce(bullet.transform.up * 6, ForceMode.VelocityChange);
-		Destroy(bullet, 2.0f);
+		animator.SetTrigger("Jump");
+		// var bullet = Instantiate(bulletPrefab, 
+		//                          bulletSpawn.position, 
+		//                          bulletSpawn.rotation) as GameObject;
+		// Bullet b = bullet.GetComponent<Bullet>();
+		// b.playerFrom = this.gameObject;
+		// print("setting the velocity");
+		// print(bullet.transform.up);
+		// bullet.GetComponent<Rigidbody>().isKinematic = false;
+		// bullet.GetComponent<Rigidbody>().AddForce(bullet.transform.up * 6, ForceMode.VelocityChange);
+		// Destroy(bullet, 2.0f);
+	}
+	public void CmdShake() {
+		animator.SetTrigger("Shake");
 	}
 }
