@@ -35,6 +35,25 @@ public class NetworkManager : MonoBehaviour {
            Debug.Log("소켓 접속 원료"); 
         });
 		
+		socket.On("chat",(string data)=>{
+
+			ChatJSON chatJSON = ChatJSON.CreateFromJSON(data);
+			//  채팅 발신 캐릭터명이 현재 캐릭터명인 경우
+			if (chatJSON.name == playerNameInput.text)
+			{
+				return;
+			}
+			// 다른사람으로부터 온 메시지일 경우 현재 캐릭터의 채팅창에 글자 표시
+			GameObject p = GameObject.Find(playerNameInput.text);
+
+			if (p != null)
+			{
+				Transform chatCanvas = p.transform.Find("Chat Canvas");
+				ChatController cc = chatCanvas.GetComponent<ChatController>();
+				cc.addMessage(chatJSON.name+": "+chatJSON.text+"\n");
+				Debug.Log("Chat from >> "+chatJSON.name+": "+chatJSON.text);
+			}
+		});
 
 		socket.On("enemies", (string data)=>{
 			EnemiesJSON enemiesJSON = EnemiesJSON.CreateFromJSON(data);
@@ -83,7 +102,7 @@ public class NetworkManager : MonoBehaviour {
 		socket.On("player move", (string data)=>{
 			UserJSON userJSON = UserJSON.CreateFromJSON(data);
 			Vector3 position = new Vector3(userJSON.position[0], userJSON.position[1], userJSON.position[2]);
-			// if it is the current player exit
+			//  현재 사용자일 경우
 			if (userJSON.name == playerNameInput.text)
 			{
 				return;
@@ -92,6 +111,9 @@ public class NetworkManager : MonoBehaviour {
 			if (p != null)
 			{
 				p.transform.position = position;
+				//Debug.Log("other player move>>"+p.transform.position);
+				//PlayerController pc = p.GetComponent<PlayerController>();
+				//pc.Animate(true);
 			}
         });
 		socket.On("player turn", (string data)=>{
@@ -184,6 +206,11 @@ public class NetworkManager : MonoBehaviour {
 		socket.EmitJson("health", (new JSONObject(JsonUtility.ToJson(healthChangeJSON))).ToString());
 	}
 
+	public void CommandChatMessage(string text){
+		ChatJSON chatJSON = new ChatJSON(text);
+		socket.EmitJson("chat",(new JSONObject(JsonUtility.ToJson(chatJSON))).ToString());
+	}
+
 	#endregion
 
 	#region JSONMessageClasses
@@ -268,6 +295,18 @@ public class NetworkManager : MonoBehaviour {
 		public static UserJSON CreateFromJSON(string data)
 		{
 			return JsonUtility.FromJson<UserJSON>(data);
+		}
+	}
+	[Serializable]
+	public class ChatJSON{
+		public string name;
+		public string text;
+		public ChatJSON(string _text){
+			text = _text;
+		}
+		public static ChatJSON CreateFromJSON(string data)
+		{
+			return JsonUtility.FromJson<ChatJSON>(data);
 		}
 	}
 

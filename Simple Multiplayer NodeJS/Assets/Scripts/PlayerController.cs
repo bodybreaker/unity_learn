@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour {
 
@@ -7,38 +8,80 @@ public class PlayerController : MonoBehaviour {
 
     public Transform cameraArm;
 
+	public Camera cam;
+
 	Animator animator;
 
 	public GameObject bulletPrefab;
 	public Transform bulletSpawn;
 	public bool isLocalPlayer = false;
 
+	// 타 사용자 애니메이션 효과를 위함
+	Vector3 otherOldPosition;
+	Vector3 otherCurrentPosition;
+	// ###############
+
 	Vector3 oldPosition;
 	Vector3 currentPosition;
 	Quaternion oldRotation;
 	Quaternion currentRotation;
 
+	// 채팅 관련
+	public InputField chatInput;
+	public Canvas ChatCanvas;
+	public Canvas MessageCanvas;
+
 	// Use this for initialization
 	void Start () {
+		animator = chracterBody.GetComponent<Animator>();
 		oldPosition = transform.position;
 		currentPosition = oldPosition;
 		oldRotation = transform.rotation;
 		currentRotation = oldRotation;
+
+		otherOldPosition = transform.position;
+		otherCurrentPosition = otherOldPosition;
+
+		// 타 사용자의 캐릭터일 경우
+		Transform ct  = ChatCanvas.transform;
+		if(!isLocalPlayer){
+
+			for (int i=0;i<ct.childCount;i++){
+				Destroy(ct.GetChild(i).gameObject);
+			}
+			
+			
+		}
+
 	}
 	
 	// Update is called once per frame
 	void Update () {
 
-		animator = chracterBody.GetComponent<Animator>();
+		// 타 사용자의 캐릭터일 경우
 		if (!isLocalPlayer) {
+			cam.enabled = false;
+			animateOther();
 			return;
 		}
-		if (Input.GetKeyDown (KeyCode.Space)) {
+		if (Input.GetKeyDown (KeyCode.Space) && !chatInput.isFocused) {
 			NetworkManager n = NetworkManager.instance.GetComponent<NetworkManager>();
 			n.CommandShoot();
 		}
-		LookAround();
-		Move();
+		if(!chatInput.isFocused){
+			LookAround();
+			Move();
+		}
+	}
+	// 본인 외 타 플레이어들의 시간당 이동 거리 가져와서 에니메이션 효과 주기
+	private void animateOther(){
+		otherCurrentPosition = transform.position;
+		if (otherCurrentPosition != otherOldPosition) {
+			otherOldPosition = otherCurrentPosition;
+			animator.SetBool("isMove",true);
+		}else{
+			animator.SetBool("isMove",false);
+		}
 	}
 
 	private void Move(){
@@ -82,10 +125,12 @@ public class PlayerController : MonoBehaviour {
 		}
 
 		if (currentRotation != oldRotation) {
-			NetworkManager.instance.GetComponent<NetworkManager>().CommandTurn(transform.rotation);
+			NetworkManager.instance.GetComponent<NetworkManager>().CommandTurn(chracterBody.rotation);
 			oldRotation = currentRotation;
 		}
 	}
+
+
 
 	
     private void LookAround(){

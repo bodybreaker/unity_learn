@@ -12,8 +12,8 @@ public class PlayerContorl : MonoBehaviour{
     [SerializeField]
     private float lookSensitivity;// 카메라 민감도
 
-     [SerializeField]
-     private Camera theCamera;
+    [SerializeField]
+    private Camera theCamera;
 
 
     [SerializeField]
