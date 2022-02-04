@@ -1,6 +1,12 @@
 var app = require('express')();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
+var express = require('express');
+var path = require('path');
+
+// 파일 업로드
+var multer = require('multer'); // express에 multer모듈 적용 (for 파일업로드)
+var upload = multer({ dest: 'uploads/'})
 
 server.listen(3000);
 
@@ -9,8 +15,18 @@ var enemies = [];
 var playerSpawnPoints = [];
 var clients = [];
 
+
+app.use(express.static(path.join(__dirname,'public')));
+
 app.get('/', function(req, res) {
 	res.send('hey you got back get "/"');
+});
+
+
+// 파일 업로드
+app.post('/upload', upload.single('file'), function(req, res){
+	res.send('Uploaded! : '+req.file); // object를 리턴함
+	console.log(req.file); // 콘솔(터미널)을 통해서 req.file Object 내용 확인 가능.
 });
 
 io.on('connection', function(socket) {
@@ -131,7 +147,20 @@ io.on('connection', function(socket) {
 			name:currentPlayer.name,
 			text:data.text
 		}
+		socket.emit('chat', data);
 		socket.broadcast.emit('chat', data);
+	});
+
+
+	//video-url
+	socket.on('video-url',function(data){
+		console.log(currentPlayer.name+' recv: video-url: '+JSON.stringify(data));
+		var data ={
+			name:currentPlayer.name,
+			url:data.url
+		}
+		socket.emit('video-play', data);
+		socket.broadcast.emit('video-play', data);
 	});
 
 	socket.on('health', function(data) {

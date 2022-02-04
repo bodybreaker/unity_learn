@@ -66,13 +66,13 @@ public class PlayerController : MonoBehaviour {
 			return;
 		}
 		if (Input.GetKeyDown (KeyCode.Space) && !chatInput.isFocused) {
-			NetworkManager n = NetworkManager.instance.GetComponent<NetworkManager>();
-			n.CommandShoot();
+			//NetworkManager n = NetworkManager.instance.GetComponent<NetworkManager>();
+			//n.CommandShoot();
 		}
 
 		if (Input.GetKeyDown (KeyCode.LeftControl) && !chatInput.isFocused) {
-			NetworkManager n = NetworkManager.instance.GetComponent<NetworkManager>();
-			n.CommandShake();
+			//NetworkManager n = NetworkManager.instance.GetComponent<NetworkManager>();
+			//n.CommandShake();
 		}
 
 		if(!chatInput.isFocused){
@@ -138,12 +138,12 @@ public class PlayerController : MonoBehaviour {
 		currentRotation = chracterBody.rotation;
 
 		if (currentPosition != oldPosition) {
-			NetworkManager.instance.GetComponent<NetworkManager>().CommandMove(transform.position);
+			//NetworkManager.instance.GetComponent<NetworkManager>().CommandMove(transform.position);
 			oldPosition = currentPosition;
 		}
 
 		if (currentRotation != oldRotation) {
-			NetworkManager.instance.GetComponent<NetworkManager>().CommandTurn(chracterBody.rotation);
+			//NetworkManager.instance.GetComponent<NetworkManager>().CommandTurn(chracterBody.rotation);
 			oldRotation = currentRotation;
 		}
 	}

@@ -154,7 +154,7 @@ PlayerSettings:
   androidMaxAspectRatio: 2.1
   applicationIdentifier:
     Android: io.carnagey
-    Standalone: unity.io.carnagey.Simple Multiplayer NodeJS
+    Standalone: com.io.carnagey.SimpleMultiplayerNodeJS
     iPhone: io.carnagey
     tvOS: io.carnagey
   buildNumber:
@@ -655,7 +655,8 @@ PlayerSettings:
   gcIncremental: 0
   assemblyVersionValidation: 1
   gcWBarrierValidation: 0
-  apiCompatibilityLevelPerPlatform: {}
+  apiCompatibilityLevelPerPlatform:
+    Standalone: 6
   m_RenderingPath: 1
   m_MobileRenderingPath: 1
   metroPackageName: Simple Multiplayer NodeJS

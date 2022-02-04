@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using UnityEngine.UI;
 using Defective.JSON;
 using socket.io;
+using UnityEngine.Video;
 
 
 public class NetworkManager : MonoBehaviour {
@@ -16,6 +17,8 @@ public class NetworkManager : MonoBehaviour {
     public Socket socket;
 	public InputField playerNameInput;
 	public GameObject player;
+
+	public VideoPlayer videoPlayer;
 
 	void Awake()
 	{
@@ -41,6 +44,9 @@ public class NetworkManager : MonoBehaviour {
 			//  채팅 발신 캐릭터명이 현재 캐릭터명인 경우
 			if (chatJSON.name == playerNameInput.text)
 			{
+				// 현재 캐릭터(본인)의 메시지박스에 메시지 표시
+				MessageBoxController myMc = GameObject.Find(playerNameInput.text).transform.Find("Healthbar Canvas").transform.Find("Message Canvas").GetComponent<MessageBoxController>();
+				myMc.ShowMessage(chatJSON.text);
 				return;
 			}
 			// 다른사람으로부터 온 메시지일 경우 현재 캐릭터의 채팅창에 글자 표시
@@ -53,6 +59,34 @@ public class NetworkManager : MonoBehaviour {
 				cc.addMessage(chatJSON.name+": "+chatJSON.text+"\n");
 				Debug.Log("Chat from >> "+chatJSON.name+": "+chatJSON.text);
 			}
+
+			MessageBoxController otherMc = GameObject.Find(chatJSON.name).transform.Find("Healthbar Canvas").transform.Find("Message Canvas").GetComponent<MessageBoxController>();
+			otherMc.ShowMessage(chatJSON.text);
+
+
+			// 캐릭터 위 메시지박스 
+
+
+		});
+		// url 영상
+		socket.On("video-play",(string data)=>{
+
+			URLJSON urlJSON = URLJSON.CreateFromJSON(data);
+			Debug.Log("video-play >> "+urlJSON.name+": "+urlJSON.url);
+			if (urlJSON.name != playerNameInput.text)
+			{	
+				// 다른사람으로부터 영상재생 요청이 온경우 채팅창에 표시
+				GameObject p = GameObject.Find(playerNameInput.text);
+				if (p != null)
+				{
+					Transform chatCanvas = p.transform.Find("Chat Canvas");
+					ChatController cc = chatCanvas.GetComponent<ChatController>();
+					cc.addMessage(urlJSON.name+" 님이 영상을 재생하였습니다.\n");
+
+				}
+			}
+			videoPlayer.url = urlJSON.url;
+			videoPlayer.Play();			
 		});
 
 		socket.On("enemies", (string data)=>{
@@ -227,10 +261,32 @@ public class NetworkManager : MonoBehaviour {
 		socket.EmitJson("chat",(new JSONObject(JsonUtility.ToJson(chatJSON))).ToString());
 	}
 
+	public void CommandPlayURL(string url)
+	{
+		print("Play URL");
+		URLJSON urlJSON = new URLJSON(url);
+		socket.EmitJson("video-url",(new JSONObject(JsonUtility.ToJson(urlJSON))).ToString());
+	}
+
 	#endregion
 
 	#region JSONMessageClasses
 
+	[Serializable]
+
+	public class URLJSON
+	{
+		public string url;
+		public string name;
+
+		public URLJSON(string _url){
+			url = _url;
+		}
+		public static URLJSON CreateFromJSON(string data)
+		{
+			return JsonUtility.FromJson<URLJSON>(data);
+		}
+	}
 	[Serializable]
 	public class PlayerJSON
 	{
