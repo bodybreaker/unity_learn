@@ -8,6 +8,7 @@ public class ChatController : MonoBehaviour
     public InputField chatInput;
     public Text chatText;
     // Start is called before the first frame update
+    
     void Start()
     {
         Debug.Log("ChatController initiate");

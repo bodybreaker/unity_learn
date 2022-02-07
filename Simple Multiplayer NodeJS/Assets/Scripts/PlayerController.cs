@@ -125,7 +125,7 @@ public class PlayerController : MonoBehaviour {
 
 		bool test = animator.GetBool("isMove");
 
-		Debug.Log("isMove >> "+test);
+		//Debug.Log("isMove >> "+test);
 		if(isMove){
 			Vector3 lookForward = new Vector3(cameraArm.forward.x,0f,cameraArm.forward.z).normalized;
 			Vector3 lookRight = new Vector3(cameraArm.right.x,0f,cameraArm.right.z).normalized;
