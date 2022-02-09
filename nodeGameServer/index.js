@@ -1,12 +1,49 @@
+// import { fromPath } from "pdf2pic";
+
 var app = require('express')();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
 var express = require('express');
 var path = require('path');
+var os = require("os");
+var pdf2pic = require("pdf2pic")
+const fs = require('fs');
 
+// for Linux
+//const { Poppler } = require("node-poppler");
+//const poppler = new Poppler("./usr/bin");
+
+const { Poppler } = require("node-poppler");
+const poppler = new Poppler();
+
+//  참고 - http://expressjs.com/en/resources/middleware/multer.html
 // 파일 업로드
 var multer = require('multer'); // express에 multer모듈 적용 (for 파일업로드)
-var upload = multer({ dest: 'uploads/'})
+const { resolve } = require('path');
+let storage = multer.diskStorage({
+    destination: function(req, file, callback){
+		if(req.params.type=="video"){
+			callback(null,"public/video/")
+			console.log("비디오 저장")
+		}else if(req.params.type == "pdf"){
+			callback(null,"public/pdf/")
+			console.log("pdf변환")
+		}
+    },
+    filename: function(req, file, callback){
+		const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+        callback(null, uniqueSuffix+"-"+file.originalname);
+    }
+});
+
+// pdf -> 이미지 변환 
+// https://github.com/yakovmeister/pdf2image
+// gs9.52
+// GraphicsMagick-1.3.35-Q16
+// poppler - pdfinfo
+// https://github.com/Fdawgs/node-poppler
+
+var upload = multer({ storage: storage})
 
 server.listen(3000);
 
@@ -16,18 +53,113 @@ var playerSpawnPoints = [];
 var clients = [];
 
 
-app.use(express.static(path.join(__dirname,'public')));
+// app.use(express.static(path.join(__dirname,'public')));
+app.use('/public', express.static('public'));
 
 app.get('/', function(req, res) {
 	res.send('hey you got back get "/"');
 });
 
 
-// 파일 업로드
-app.post('/upload', upload.single('file'), function(req, res){
-	res.send('Uploaded! : '+req.file); // object를 리턴함
+// // 영상 업로드
+// app.post('/uploadVideo', upload.fields([{name:'destFile',maxCount:1},{name:'type',maxCount:1}]), function(req, res){
+// 	console.log(req.files['destFile']);
+// 	console.log(req.body.type);  
+// 	res.json({
+// 		'url':'http://'+hostname+":"+port+"/public/video/"+req.files['destFile'].originalname
+// 	}); 
+// });
+
+// pdf/ppt 업로드
+app.post('/upload/:type', upload.single('destFile'), function(req, res){
+	
+	// storage destination이 선 호출됨
 	console.log(req.file); // 콘솔(터미널)을 통해서 req.file Object 내용 확인 가능.
+	console.log(req.params.type);
+	
+	console.log('저장위치 >>' + req.file.path);
+
+	if(req.params.type =="video"){
+		res.json({
+			'url':req.protocol+'://'+req.get('host')+"/"+req.file.destination+req.file.filename
+		}); // object를 리턴함
+		return;
+	}else if (req.params.type=="pdf"){
+		console.log("이미지로 변환")
+		// pdf -> 이미지 리스트 전환
+
+		poppler.pdfInfo(req.file.path,{printAsJson:true}).then(function(info,error){
+			
+			let defWidth = 841.8*2
+			let defHeight = 595.2*2
+
+			console.log("페이지 수>>  ",info.pages);
+			console.log("페이지 사이즈>>  ",info.pageSize);
+
+			// 페이지 사이즈 파싱을 위한 정규표현식 추가
+			// 595.2 x 841.8 pts (A4)
+			// 612 x 792 pts (letter) => ([1-9]*\.*[1-9]*) x ([1-9]*\.*[1-9]*)
+			let regex = /([1-9]*\.*[1-9]*) x ([1-9]*\.*[1-9]*)/;
+			let sizeArr = info.pageSize.match(regex);
+			
+			console.log(sizeArr);
+			if(sizeArr.length!=3){
+				// 페이지 사이즈 파싱 실패
+				console.log("페이지 사이즈 파싱 실패");
+				
+			}else{
+				// 페이지 사이즈 파싱 성공
+				console.log("가로 >> ",sizeArr[1]," 세로 >> ",sizeArr[2]);
+				defWidth = sizeArr[1]*2;
+				defHeight = sizeArr[2]*2;
+			}
+			console.log("파일명 >> ",req.file.name)
+			const options = {
+				density: 100,
+				saveFilename: req.file.filename,
+				savePath: "public/image",
+				format: "png",
+				width: defWidth,
+				height: defHeight
+			};
+			const storeAsImage = pdf2pic.fromPath(req.file.path, options);
+			// 모든 페이지를 변환해야함 promise all
+			let pageNumArr = []; 
+		
+			for (let i=0; i< parseInt(info.pages);i++){
+				pageNumArr.push(i+1);
+			}
+			async function call(){
+				list = await Promise.all(pageNumArr.map(pageNum=>storeAsImage(pageNum).then((resolve)=>{
+					console.log("Page>> ",pageNum);
+					//console.log(resolve.path);
+					return resolve;
+				})));
+				//console.log(list);
+				return list;
+			}
+			call().then(imgList=>{
+
+				
+				console.log(imgList)
+				urlList = imgList.map(imgInfo => {
+					return req.protocol+'://'+req.get('host')+"/"+imgInfo.path
+				})
+				res.json({
+					'urls':urlList
+				}); // obj
+			});
+
+			
+			
+		})
+
+
+	}
 });
+
+
+
 
 io.on('connection', function(socket) {
 	
